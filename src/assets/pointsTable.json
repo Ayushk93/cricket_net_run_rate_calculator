@@ -1,0 +1,57 @@
+[
+    {
+      "#": 1,
+      "Team": "Vikings XI",
+      "Matches": 7,
+      "Won": 5,
+      "Lost": 2,
+      "NRR": 0.771,
+      "For": "1130/133.1",
+      "Against": "1071/138.5",
+      "Pts": 10
+    },
+    {
+      "#": 2,
+      "Team": "BHAYANKAR XI",
+      "Matches": 7,
+      "Won": 4,
+      "Lost": 3,
+      "NRR": 0.597,
+      "For": "1217/140",
+      "Against": "1066/131.4",
+      "Pts": 8
+    },
+    {
+      "#": 3,
+      "Team": "RAGNAROK STARS",
+      "Matches": 7,
+      "Won": 4,
+      "Lost": 3,
+      "NRR": 0.319,
+      "For": "1085/126",
+      "Against": "1136/137",
+      "Pts": 8
+    },
+    {
+      "#": 4,
+      "Team": "Treacherous",
+      "Matches": 7,
+      "Won": 3,
+      "Lost": 4,
+      "NRR": 0.331,
+      "For": "1066/128.2",
+      "Against": "1094/137.1",
+      "Pts": 6
+    },
+    {
+      "#": 5,
+      "Team": "Renegades XI",
+      "Matches": 8,
+      "Won": 2,
+      "Lost": 6,
+      "NRR": -1.75,
+      "For": "1003/155.2",
+      "Against": "1134/138.1",
+      "Pts": 4
+    }
+]

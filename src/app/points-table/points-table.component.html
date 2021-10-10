@@ -1,0 +1,47 @@
+<br/>
+<h4>Points Table of Super Cricket 2019 tournament</h4>
+<table class="table">
+    <thead>
+      <tr>
+        <th scope="col" *ngFor="let header of pointsTableHeader">{{header}}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let data of pointsTableData">
+        <th scope="row">{{data["#"]}}</th>
+        <td>{{data["Team"]}}</td>
+        <td>{{data["Matches"]}}</td>
+        <td>{{data["Won"]}}</td>
+        <td>{{data["Lost"]}}</td>
+        <td>{{data["NRR"]}}</td>
+        <td>{{data["For"]}}</td>
+        <td>{{data["Against"]}}</td>
+        <td>{{data["Pts"]}}</td>
+      </tr>
+    </tbody>
+  </table>
+  
+<br/>
+
+<div class="row">
+    <div class="col-sm-4"><h5>Treacherous Match Against</h5></div>
+    <div class="col-sm-4">
+        <select class="form-select" aria-label="Select Team" (change)="nrrCalculationBasedOnTeamSelection($event)">
+            <option selected disabled>Select Team</option>
+            <option value="RAGNAROK">RAGNAROK</option>
+            <option value="BHAYANKAR XI">BHAYANKAR XI</option>
+        </select>
+    </div>
+</div>
+
+<div class="row" *ngIf="scenarioCalculated">
+    <div class="">
+        <h5>{{scenario1}}</h5>
+        <p>{{answer1}}</p>
+    </div>
+    <div class="">
+        <h5>{{scenario2}}</h5>
+        <p>{{answer2}}</p>
+    </div>
+</div>
+
