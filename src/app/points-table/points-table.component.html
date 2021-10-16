@@ -1,47 +1,76 @@
-<br/>
-<h4>Points Table of Super Cricket 2019 tournament</h4>
+<br />
+<h4 class="d-flex justify-content-center">Points Table of Super Cricket 2019 tournament</h4>
 <table class="table">
-    <thead>
-      <tr>
-        <th scope="col" *ngFor="let header of pointsTableHeader">{{header}}</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let data of pointsTableData">
-        <th scope="row">{{data["#"]}}</th>
-        <td>{{data["Team"]}}</td>
-        <td>{{data["Matches"]}}</td>
-        <td>{{data["Won"]}}</td>
-        <td>{{data["Lost"]}}</td>
-        <td>{{data["NRR"]}}</td>
-        <td>{{data["For"]}}</td>
-        <td>{{data["Against"]}}</td>
-        <td>{{data["Pts"]}}</td>
-      </tr>
-    </tbody>
-  </table>
-  
-<br/>
+  <thead>
+    <tr>
+      <th scope="col" *ngFor="let header of pointsTableHeader">{{header}}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of pointsTableData">
+      <th scope="row">{{data["#"]}}</th>
+      <td>{{data["Team"]}}</td>
+      <td>{{data["Matches"]}}</td>
+      <td>{{data["Won"]}}</td>
+      <td>{{data["Lost"]}}</td>
+      <td>{{data["NRR"]}}</td>
+      <td>{{data["For"]}}</td>
+      <td>{{data["Against"]}}</td>
+      <td>{{data["Pts"]}}</td>
+    </tr>
+  </tbody>
+</table>
 
-<div class="row">
-    <div class="col-sm-4"><h5>Treacherous Match Against</h5></div>
-    <div class="col-sm-4">
-        <select class="form-select" aria-label="Select Team" (change)="nrrCalculationBasedOnTeamSelection($event)">
-            <option selected disabled>Select Team</option>
-            <option value="RAGNAROK">RAGNAROK</option>
-            <option value="BHAYANKAR XI">BHAYANKAR XI</option>
+<br />
+
+<div class="card text-center">
+  <div class="text-white bg-primary">
+    Calculate NRR
+  </div>
+  <div class="card-body">
+    <form [formGroup]="calculatorForm" (ngSubmit)="onSubmit()">
+
+      <div class="form-group row d-flex justify-content-center">
+        <label class="col-sm-2 col-form-label" for="team" >Select Team</label>
+        <select class="col-sm-4" aria-label="Select Team" formControlName="teamDetails">
+          <option *ngFor="let data of pointsTableData" [ngValue]="data">{{data["Team"]}}</option>
         </select>
-    </div>
-</div>
+      </div>
+      <br />
 
-<div class="row" *ngIf="scenarioCalculated">
-    <div class="">
-        <h5>{{scenario1}}</h5>
-        <p>{{answer1}}</p>
-    </div>
-    <div class="">
-        <h5>{{scenario2}}</h5>
-        <p>{{answer2}}</p>
-    </div>
-</div>
+      <div class="form-group row d-flex justify-content-center">
+        <label class="col-sm-2 col-form-label" for="runsScored">Runs Scored</label>
+        <input required class="col-sm-4" min="0" type="number" id="runsScored" (keypress)="runsValidator($event)" name="runsScored" formControlName="runsScored">
+      </div>
+      <br />
 
+      <div class="form-group row d-flex justify-content-center">
+        <label class="col-sm-2 col-form-label" for="oversFaced">Overs Faced</label>
+        <input required class="col-sm-4" min="0" max="20" type="number" (keypress)="oversValidator($event)"  id="oversFaced" name="oversFaced" formControlName="oversFaced">
+      </div>
+      <br />
+
+      <div class="form-group row d-flex justify-content-center">
+        <label class="col-sm-2 col-form-label" for="runsConceded">Runs Conceded</label>
+        <input required class="col-sm-4" min="0" type="number" id="runsConceded" (keypress)="runsValidator($event)" name="runsConceded" formControlName="runsConceded">
+      </div>
+      <br />
+
+      <div class="form-group row d-flex justify-content-center">
+        <label class="col-sm-2 col-form-label" for="oversBowled">Overs Bowled</label>
+        <input required class="col-sm-4" min="0" max="20" (keypress)="oversValidator($event)" type="number" id="oversBowled" name="oversBowled" formControlName="oversBowled">
+      </div>
+      <br />
+
+      <div class="form-group row d-flex justify-content-center">
+        <button type="submit" class="btn btn-primary col-sm-2" [disabled]="!calculatorForm.valid">Calculate</button> &nbsp;&nbsp;
+        <button type="reset" class="btn btn-info col-sm-2" (onClick)="resetTheForm()" [disabled]="calculatorForm.pristine">Reset</button>
+      </div>
+      <br />
+
+    </form>
+  </div>
+  <div *ngIf="calculatorForm.valid" class="card-footer text-muted d-flex justify-content-center">
+     <h3>{{answer}}</h3>
+  </div>
+</div>

@@ -1,5 +1,6 @@
 import { Component, OnInit, ɵisDefaultChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from "@angular/common/http";
+import { FormGroup, FormControl, Validators } from '@angular/forms'
 
 @Component({
   selector: 'app-points-table',
@@ -10,92 +11,95 @@ export class PointsTableComponent implements OnInit {
 
   pointsTableHeader = ['#', 'Team', 'Matches', 'Won', 'Lost', 'NRR', 'For', 'Against', 'Pts'];
   pointsTableData: any = [];
-  maxOver = 20;
-  treacherousAgainstRagnarok = {
-    batFirst: { runs: 120, overs: 20 },
-    bowlFirst: { runs: 119, overs: 20 }
-  };
-  treacherousAgainstBhayankar = {
-    batFirst: { runs: 80, overs: 20 },
-    bowlFirst: { runs: 79, overs: 20 }
-  };
-  RagnarokStarsNRR = 0.319;
-  TreacherousNRR = 0.331;
-  scenarioCalculated = false;
-  answer1 = '';
-  answer2 = '';
-  treacherousFor = { runs: 1066, overs: 128.2 };
-  treacherousAgainst = { runs: 1094, overs: 137.1 };
-  scenario1 = '';
-  scenario2 = '';
+  calculatorForm = new FormGroup({
+    teamDetails: new FormControl("", Validators.required),
+    runsScored: new FormControl("", Validators.required),
+    oversFaced: new FormControl("", Validators.required),
+    runsConceded: new FormControl("", Validators.required),
+    oversBowled: new FormControl("", Validators.required),
+  });
+  isFormSubmitted = false;
+  answer = '';
+
   constructor(private httpClient: HttpClient) { }
 
   ngOnInit(): void {
-    this.httpClient.get("assets/pointsTable.json").subscribe(data => {
+    this.httpClient.get("https://glossy-certain-warlock.glitch.me/pointsTable").subscribe(data => { //http://localhost:3000/
       console.log(data);
       this.pointsTableData = data;
     })
   }
 
   //below function is used for selection of appropriate values based on team selection 
-  nrrCalculationBasedOnTeamSelection(event: any) {
-    this.scenarioCalculated = false;
-    const selectedTeam = event.target.value;
-    if (this.RagnarokStarsNRR < this.TreacherousNRR) {
-      if (selectedTeam === 'RAGNAROK') {
-        this.scenario1 = 'Q-1a:';
-        const batSecondRestrict1 = this.randomScoreAndOverGenerator(this.treacherousAgainstRagnarok.batFirst.runs, this.treacherousAgainstRagnarok.batFirst.runs / 2);
-        const batSecondRestrict2 = this.randomScoreAndOverGenerator(this.treacherousAgainstRagnarok.batFirst.runs, batSecondRestrict1);
-        const batSecondRestrictOvers = this.randomScoreAndOverGenerator(20, 15);
-        const nrrUptoBowl = this.nrrCalculator(this.treacherousAgainstRagnarok.batFirst, batSecondRestrict1, batSecondRestrictOvers, 0);
-        const nrrFromBowl = this.nrrCalculator(this.treacherousAgainstRagnarok.batFirst, batSecondRestrict2, batSecondRestrictOvers, 0);
+  onSubmit() {
+    const userInput = this.calculatorForm.value;
+    let [runsScored, oversFaced] = [...userInput.teamDetails.For.split("/")];
+    let [runsConceded, oversBowled] = [...userInput.teamDetails.Against.split("/")];
+    console.log(this.calculatorForm.value);
+    console.log('runsScored, oversFaced', runsScored, oversFaced);
+    console.log('runsConceded, oversBowled', runsConceded, oversBowled);
+    runsScored = Number(runsScored) + userInput.runsScored;
+    runsConceded = Number(runsConceded) + userInput.runsConceded;
+    oversFaced = this.overCalculation(oversFaced, (userInput.oversFaced).toString());
+    oversBowled = this.overCalculation(oversBowled, (userInput.oversBowled).toString());
+    const nrr = Number(this.nrrCalculator(runsScored, runsConceded, oversFaced, oversBowled));
+    this.answer = `New NRR of ${userInput.teamDetails.Team} will be ${nrr.toFixed(3)}`;
+    this.isFormSubmitted = true;
+  }
 
-        this.answer1 = `If Treacherous score ${this.treacherousAgainstRagnarok.batFirst.runs} runs in 
-          ${this.treacherousAgainstRagnarok.batFirst.overs} overs, Treacherous needs to restrict
-          RAGNAROK STARS between ${batSecondRestrict1} to ${batSecondRestrict2} runs in ${batSecondRestrictOvers}.
-          Revised NRR of Treacherous will be between ${nrrFromBowl} to ${nrrUptoBowl}.`;
-        
-        this.scenario2 = 'Q-1b:';
-        const batSecondAchieveOvers1 = this.randomScoreAndOverGenerator(20, 12);
-        const batSecondAchieveOvers2 = this.randomScoreAndOverGenerator(batSecondAchieveOvers1, 20);
-        const nrrUptoBat = this.nrrCalculator(this.treacherousAgainstRagnarok.bowlFirst, this.treacherousAgainstRagnarok.bowlFirst.runs, batSecondAchieveOvers1, 1);
-        const nrrFromBat = this.nrrCalculator(this.treacherousAgainstRagnarok.bowlFirst, this.treacherousAgainstRagnarok.bowlFirst.runs, batSecondAchieveOvers2, 1);
-        this.answer2 = `Treacherous need to chase ${this.treacherousAgainstRagnarok.bowlFirst.runs + 1} runs between 
-          ${batSecondAchieveOvers1} to ${batSecondAchieveOvers2} Overs. Revised NRR for Treacherous will be 
-          between ${nrrUptoBat} to ${nrrFromBat}.`
-      }
-      else {
-        this.scenario1 = 'Q-2a:';
-        const batSecondRestrict1 = this.randomScoreAndOverGenerator(this.treacherousAgainstBhayankar.batFirst.runs, this.treacherousAgainstBhayankar.batFirst.runs / 2);
-        const batSecondRestrict2 = this.randomScoreAndOverGenerator(this.treacherousAgainstBhayankar.batFirst.runs, batSecondRestrict1);
-        const batSecondRestrictOvers = this.randomScoreAndOverGenerator(20, 15);
-        const nrrUptoBowl = this.nrrCalculator(this.treacherousAgainstBhayankar.batFirst, batSecondRestrict1, batSecondRestrictOvers, 0);
-        const nrrFromBowl = this.nrrCalculator(this.treacherousAgainstBhayankar.batFirst, batSecondRestrict2, batSecondRestrictOvers, 0);
-        this.answer1 = `If Treacherous scores ${this.treacherousAgainstBhayankar.batFirst.runs} runs in ${this.treacherousAgainstBhayankar.batFirst.overs} overs,
-        Treacherous needs to restrict BHAYANKAR XI 
-          between ${batSecondRestrict1} to ${batSecondRestrict2} runs in ${batSecondRestrictOvers}. Revised NRR of Treacherous will be between ${nrrFromBowl} to ${nrrUptoBowl}.`;
-
-        this.scenario2 = 'Q-2b:';
-        const batSecondAchieveOvers1 = this.randomScoreAndOverGenerator(20, 12);
-        const batSecondAchieveOvers2 = this.randomScoreAndOverGenerator(batSecondAchieveOvers1, 20);
-        const nrrUptoBat = this.nrrCalculator(this.treacherousAgainstBhayankar.bowlFirst, this.treacherousAgainstBhayankar.bowlFirst.runs, batSecondAchieveOvers1, 1);
-        const nrrFromBat = this.nrrCalculator(this.treacherousAgainstBhayankar.bowlFirst, this.treacherousAgainstBhayankar.bowlFirst.runs, batSecondAchieveOvers2, 1);
-        this.answer2 = `Treacherous needs to chase ${this.treacherousAgainstBhayankar.bowlFirst.runs + 1} between ${batSecondAchieveOvers1} to ${batSecondAchieveOvers2} Overs.
-          Revised NRR for Treacherous will be between ${nrrUptoBat} to ${nrrFromBat}.`;
-      }
+  overCalculation(oldOversInput: string, newOversInput: string): string {
+    if(oldOversInput.includes(".") && newOversInput.includes(".")) {
+      let oldOvers = oldOversInput.split(".");
+      let oldOversNum = (Number(oldOvers[0]) * 6) + Number(oldOvers[1]);
+      let newOvers = newOversInput.split(".");
+      let newOversNum = (Number(newOvers[0]) * 6) + Number(newOvers[1]);
+      return ((Math.floor((oldOversNum + newOversNum) / 6)).toString() + '.' + ((oldOversNum + newOversNum) % 6))
+    } else {
+      return (Number(oldOversInput) + Number(newOversInput)).toString();
     }
-    this.scenarioCalculated = true;
   }
 
-  //below function is used for nrr calculation based on run scored conceded by team and overs bowled
-  nrrCalculator(batFirst: any, runsScroed: any, oversBowled: any, chase: number) {
-    const forTotal = (this.treacherousFor.runs + batFirst.runs) / (this.treacherousFor.overs + batFirst.overs);
-    const againstTotal = (this.treacherousAgainst.runs + runsScroed) / (this.treacherousAgainst.overs + oversBowled);
-    return ((forTotal - againstTotal) + this.TreacherousNRR).toFixed(3);
+  nrrCalculator(runsScored: number, runsConceded: number, oversFaced: string, oversBowled: string): string {
+    if (oversFaced.includes(".") && oversBowled.includes(".")) {
+      const oversFacedData = oversFaced.split(".");
+      const oversBowledData = oversBowled.split(".");
+      return ((runsScored/(Number(oversFacedData[0]) + (Number(oversFacedData[1]) / 6))) - 
+                (runsConceded/(Number(oversBowledData[0]) + (Number(oversBowledData[1]) / 6)))).toString();
+    } else if (oversFaced.includes(".") && !oversBowled.includes(".")) {
+      const oversFacedData = oversFaced.split(".");
+      return ((runsScored/(Number(oversFacedData[0]) + (Number(oversFacedData[1]) / 6))) - (runsConceded/Number(oversBowled))).toString();
+    } else if (!oversFaced.includes(".") && oversBowled.includes(".")) {
+      const oversBowledData = oversBowled.split(".");
+      return ((runsScored/Number(oversFaced)) - (runsConceded/(Number(oversBowledData[0]) + (Number(oversBowledData[1]) / 6)))).toString();
+    } else if (!oversFaced.includes(".") && !oversBowled.includes(".")) {
+      return ((runsScored/Number(oversFaced)) - (runsConceded/Number(oversBowled))).toString();
+    } else {
+      return '';
+    }
   }
 
-  //below function is used for random over and score generation based on given range
-  randomScoreAndOverGenerator(max: number, min: number): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+  oversValidator(event: any) {
+    const pattern = '0123456789.';
+    if (event.key === '.' && event.target.value.includes('.')) {
+      event.preventDefault();
+    } else if (event.target.value.includes('.') && event.key > 6) {
+      event.preventDefault();
+    } else if (event.target.value.length === 4 || event.target.value === '20' || !pattern.includes(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  runsValidator(event: any) {
+    const pattern = '0123456789';
+    if (!pattern.includes(event.key) || event.target.value.length === 4 || (event.key === '0' && event.target.value.length === 0)) {
+      event.preventDefault();
+    }
+  }
+
+
+  resetTheForm(): void {
+    this.calculatorForm.reset();
+    this.answer = '';
+    this.isFormSubmitted = false;
   }
 }
