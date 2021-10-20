@@ -12,19 +12,22 @@ export class PointsTableComponent implements OnInit {
   pointsTableHeader = ['#', 'Team', 'Matches', 'Won', 'Lost', 'NRR', 'For', 'Against', 'Pts'];
   pointsTableData: any = [];
   calculatorForm = new FormGroup({
-    teamDetails: new FormControl("", Validators.required),
-    runsScored: new FormControl("", Validators.required),
-    oversFaced: new FormControl("", Validators.required),
-    runsConceded: new FormControl("", Validators.required),
-    oversBowled: new FormControl("", Validators.required),
+    playingTeam: new FormControl("", Validators.required),
+    oppositionTeam: new FormControl("", Validators.required),
+    overs: new FormControl("", Validators.required),
+    position: new FormControl("", Validators.required),
+    battingBowling: new FormControl("", Validators.required),
+    runsToScore: new FormControl("", Validators.required),
   });
   isFormSubmitted = false;
   answer = '';
+  mainTeamSelected = '';
+  displayOtherFields = false;
 
   constructor(private httpClient: HttpClient) { }
 
   ngOnInit(): void {
-    this.httpClient.get("https://glossy-certain-warlock.glitch.me/pointsTable").subscribe(data => { //http://localhost:3000/
+    this.httpClient.get("https://glossy-certain-warlock.glitch.me/pointsTable").subscribe(data => { //http://localhost:3000
       console.log(data);
       this.pointsTableData = data;
     })
@@ -33,17 +36,17 @@ export class PointsTableComponent implements OnInit {
   //below function is used for selection of appropriate values based on team selection 
   onSubmit() {
     const userInput = this.calculatorForm.value;
-    let [runsScored, oversFaced] = [...userInput.teamDetails.For.split("/")];
-    let [runsConceded, oversBowled] = [...userInput.teamDetails.Against.split("/")];
+    let [runsScored, oversFaced] = [...userInput.playingTeam.For.split("/")];
+    let [runsConceded, oversBowled] = [...userInput.playingTeam.Against.split("/")];
     console.log(this.calculatorForm.value);
+    runsScored = userInput.battingBowling === 'Yes' ? Number(runsScored) + userInput.runsToScore : Number(runsScored) + userInput.runsToScore + 1;
+    runsConceded = userInput.battingBowling === 'No' ? Number(runsConceded) + userInput.runsToScore : Number(runsConceded) + userInput.runsToScore - 1;
+    oversFaced = this.overCalculation(oversFaced, (userInput.overs).toString());
+    oversBowled = this.overCalculation(oversBowled, (userInput.overs).toString());
     console.log('runsScored, oversFaced', runsScored, oversFaced);
     console.log('runsConceded, oversBowled', runsConceded, oversBowled);
-    runsScored = Number(runsScored) + userInput.runsScored;
-    runsConceded = Number(runsConceded) + userInput.runsConceded;
-    oversFaced = this.overCalculation(oversFaced, (userInput.oversFaced).toString());
-    oversBowled = this.overCalculation(oversBowled, (userInput.oversBowled).toString());
     const nrr = Number(this.nrrCalculator(runsScored, runsConceded, oversFaced, oversBowled));
-    this.answer = `New NRR of ${userInput.teamDetails.Team} will be ${nrr.toFixed(3)}`;
+    this.answer = `New NRR of ${userInput.playingTeam.Team} will be ${nrr.toFixed(3)}. Position not Supported`;
     this.isFormSubmitted = true;
   }
 
@@ -82,9 +85,17 @@ export class PointsTableComponent implements OnInit {
     const pattern = '0123456789.';
     if (event.key === '.' && event.target.value.includes('.')) {
       event.preventDefault();
-    } else if (event.target.value.includes('.') && event.key > 6) {
-      event.preventDefault();
-    } else if (event.target.value.length === 4 || event.target.value === '20' || !pattern.includes(event.key)) {
+    } 
+    if (event.target.value.includes('.')) {
+      if (event.key > '6') {
+        event.preventDefault();
+      }
+      const overs = event.target.value.split(".")[1];
+      if (overs.length < 2) {
+        event.preventDefault();
+      }
+    }
+     else if (!pattern.includes(event.key) || (event.target.value.includes('0') && event.key === '0')) {
       event.preventDefault();
     }
   }
@@ -97,9 +108,21 @@ export class PointsTableComponent implements OnInit {
   }
 
 
-  resetTheForm(): void {
+  resetTheForm() {
     this.calculatorForm.reset();
+    console.log(this.calculatorForm.value);
+    this.displayOtherFields = false;
     this.answer = '';
     this.isFormSubmitted = false;
+    this.mainTeamSelected = '';
+  }
+
+  playingTeamSelected(event: any) {
+    this.mainTeamSelected = '';
+    console.log(this.calculatorForm.value.playingTeam.Team);
+    if (this.calculatorForm.value.playingTeam && this.calculatorForm.value.playingTeam.Team) {
+      this.mainTeamSelected = this.calculatorForm.value.playingTeam.Team;
+      this.displayOtherFields = true;
+    }
   }
 }
