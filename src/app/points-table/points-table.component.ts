@@ -63,43 +63,88 @@ export class PointsTableComponent implements OnInit {
     let temprunsConceded = runsConceded;
     let temprunsScored = runsScoredOpp;
     let opNrr = userInput.oppositionTeam.NRR, nrr2 = 0, nrr3 = 0, bool = false, run1 = 0, run2 = 0;
-    if (userInput.battingBowling === 'Yes' && (userInput.position + 2 === userInput.oppositionTeam['#'])) { 
-      while (true) {
-        temprunsConceded--;
-        temprunsScored--;
-        nrr2 = Number(this.nrrCalculator(runsScored, temprunsConceded, oversFaced, oversBowled));
-        opNrr = Number(this.nrrCalculator(temprunsScored, runsConcededOpp, oversFacedOpp, oversBowledOpp));
-        if (nrr2 > opNrr && nrr2 > this.pointsTableData[userInput.position].NRR) {
-          break;
-        }
-        nrr3 = nrr2;
-      }
-      this.answer = `Run from ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${userInput.runsToScore - 1} and New NRR of ${userInput.playingTeam.Team} will be from ${nrr1.toFixed(3)} to ${nrr3.toFixed(3)}`;
-      this.isFormSubmitted = true;
-    } else {
-      while (true) {
-        temprunsConceded--;
-        temprunsScored--;
-        nrr2 = Number(this.nrrCalculator(runsScored, temprunsConceded, oversFaced, oversBowled));
-        opNrr = Number(this.nrrCalculator(temprunsScored, runsConcededOpp, oversFacedOpp, oversBowledOpp));
-        if (nrr2 < opNrr && nrr2 > this.pointsTableData[userInput.position + 1].NRR && !bool) {
-          if (nrr1 > this.pointsTableData[userInput.position + 1].NRR) {
+    if (userInput.battingBowling === 'Yes') {
+      if (userInput.position + 2 === userInput.oppositionTeam['#']) { 
+        while (true) {
+          temprunsConceded--;
+          temprunsScored--;
+          nrr2 = Number(this.nrrCalculator(runsScored, temprunsConceded, oversFaced, oversBowled));
+          opNrr = Number(this.nrrCalculator(temprunsScored, runsConcededOpp, oversFacedOpp, oversBowledOpp));
+          if (nrr2 > opNrr && nrr2 > this.pointsTableData[userInput.position].NRR) {
             break;
-          } else if(!bool) {
-            bool = true;
-            nrr3 = nrr2;
-            nrr2 = nrr1;
-          } 
-          run2 = (userInput.runsToScore - 1) - (runsConceded - temprunsConceded);
-        } else if (bool && nrr2 > opNrr){
-          break;
+          }
+          nrr3 = nrr2;
         }
-        if (bool) {
-          nrr1 = nrr2;
+        this.answer = `Run from ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${userInput.runsToScore - 1} and New NRR of ${userInput.playingTeam.Team} will be from ${nrr1.toFixed(3)} to ${nrr3.toFixed(3)}`;
+        this.isFormSubmitted = true;
+      } else {
+        while (true) {
+          temprunsConceded--;
+          temprunsScored--;
+          nrr2 = Number(this.nrrCalculator(runsScored, temprunsConceded, oversFaced, oversBowled));
+          opNrr = Number(this.nrrCalculator(temprunsScored, runsConcededOpp, oversFacedOpp, oversBowledOpp));
+          if (nrr2 < opNrr && nrr2 > this.pointsTableData[userInput.position + 1].NRR && !bool) {
+            if (nrr1 > this.pointsTableData[userInput.position + 1].NRR) {
+              break;
+            } else if(!bool) {
+              bool = true;
+              nrr3 = nrr2;
+              nrr2 = nrr1;
+            } 
+            run2 = (userInput.runsToScore - 1) - (runsConceded - temprunsConceded);
+          } else if (bool && nrr2 > opNrr){
+            break;
+          }
+          if (bool) {
+            nrr1 = nrr2;
+          }
         }
+        this.answer = `Run from ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${run2} and New NRR of ${userInput.playingTeam.Team} will be from ${nrr3.toFixed(3)} to ${nrr1.toFixed(3)}`;
+        this.isFormSubmitted = true;
       }
-      this.answer = `Run from ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${run2} and New NRR of ${userInput.playingTeam.Team} will be from ${nrr3.toFixed(3)} to ${nrr1.toFixed(3)}`;
-      this.isFormSubmitted = true;
+    } else {
+      let tempoversBowled = oversBowledOpp;
+      let tempoversFaced = oversFaced;
+      if (userInput.position + 2 === userInput.oppositionTeam['#']) {
+        while (true) {
+          tempoversBowled = this.overReducer(tempoversBowled);
+          tempoversFaced = this.overReducer(tempoversFaced);
+          nrr2 = Number(this.nrrCalculator(runsScored, temprunsConceded, tempoversFaced, oversBowled));
+          opNrr = Number(this.nrrCalculator(temprunsScored, runsConcededOpp, oversFacedOpp, tempoversBowled));
+          console.log('tempoversBowled, tempoversFaced', tempoversBowled, tempoversFaced, nrr2, opNrr);
+          if (nrr2 > opNrr && nrr2 > this.pointsTableData[userInput.position].NRR) {
+            break;
+          }
+          nrr3 = nrr2;
+        }
+        this.answer = `Run from ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${userInput.runsToScore - 1} and New NRR of ${userInput.playingTeam.Team} will be from ${nrr1.toFixed(3)} to ${nrr3.toFixed(3)}`;
+        this.isFormSubmitted = true;
+      } else {
+        while (true) {
+          tempoversBowled = this.overReducer(tempoversBowled);
+          tempoversFaced = this.overReducer(tempoversFaced);
+          nrr2 = Number(this.nrrCalculator(runsScored, temprunsConceded, tempoversFaced, oversBowled));
+          opNrr = Number(this.nrrCalculator(temprunsScored, runsConcededOpp, oversFacedOpp, tempoversBowled));
+          console.log('tempoversBowled, tempoversFaced', tempoversBowled, tempoversFaced, nrr2, opNrr);
+          if (nrr2 < opNrr && nrr2 > this.pointsTableData[userInput.position + 1].NRR && !bool) {
+            if (nrr1 > this.pointsTableData[userInput.position + 1].NRR) {
+              break;
+            } else if(!bool) {
+              bool = true;
+              nrr3 = nrr2;
+              nrr2 = nrr1;
+            } 
+            run2 = (userInput.runsToScore - 1) - (runsConceded - temprunsConceded);
+          } else if (bool && nrr2 > opNrr){
+            break;
+          }
+          if (bool) {
+            nrr1 = nrr2;
+          }
+        }
+        this.answer = `Run from ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${run2} and New NRR of ${userInput.playingTeam.Team} will be from ${nrr3.toFixed(3)} to ${nrr1.toFixed(3)}`;
+        this.isFormSubmitted = true;
+      }
     }
   }
 
@@ -109,9 +154,20 @@ export class PointsTableComponent implements OnInit {
       let oldOversNum = (Number(oldOvers[0]) * 6) + Number(oldOvers[1]);
       let newOvers = newOversInput.split(".");
       let newOversNum = (Number(newOvers[0]) * 6) + Number(newOvers[1]);
-      return ((Math.floor((oldOversNum + newOversNum) / 6)).toString() + '.' + ((oldOversNum + newOversNum) % 6))
+      return ((Math.floor((oldOversNum + newOversNum) / 6)).toString() + '.' + ((oldOversNum + newOversNum) % 6));
     } else {
       return (Number(oldOversInput) + Number(newOversInput)).toString();
+    }
+  }
+
+  overReducer(overs: string) {
+    if(overs.includes(".")) {
+      let reduceOvers = overs.split(".");
+      let newReducedOvers = (Number(reduceOvers[0]) * 6) + Number(reduceOvers[1]) - 1;
+      return ((Math.floor((newReducedOvers) / 6)).toString() + '.' + ((newReducedOvers) % 6));
+    } else {
+      let newReducedOvers = (Number(overs) * 6) - 1;
+      return ((Math.floor((newReducedOvers) / 6)).toString() + '.' + ((newReducedOvers) % 6));
     }
   }
 
