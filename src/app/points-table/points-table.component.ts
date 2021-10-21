@@ -23,30 +23,60 @@ export class PointsTableComponent implements OnInit {
   answer = '';
   mainTeamSelected = '';
   displayOtherFields = false;
+  currentPosition = 0;
 
   constructor(private httpClient: HttpClient) { }
 
   ngOnInit(): void {
-    this.httpClient.get("https://glossy-certain-warlock.glitch.me/pointsTable").subscribe(data => { //http://localhost:3000
+    this.httpClient.get("http://localhost:3000/pointsTable").subscribe(data => { //http://localhost:3000
       console.log(data);
       this.pointsTableData = data;
     })
   }
-
+//https://glossy-certain-warlock.glitch.me/pointsTable
   //below function is used for selection of appropriate values based on team selection 
   onSubmit() {
     const userInput = this.calculatorForm.value;
     let [runsScored, oversFaced] = [...userInput.playingTeam.For.split("/")];
     let [runsConceded, oversBowled] = [...userInput.playingTeam.Against.split("/")];
+    let [runsScoredOpp, oversFacedOpp] = [...userInput.oppositionTeam.For.split("/")];
+    let [runsConcededOpp, oversBowledOpp] = [...userInput.oppositionTeam.Against.split("/")];
     console.log(this.calculatorForm.value);
-    runsScored = userInput.battingBowling === 'Yes' ? Number(runsScored) + userInput.runsToScore : Number(runsScored) + userInput.runsToScore + 1;
-    runsConceded = userInput.battingBowling === 'No' ? Number(runsConceded) + userInput.runsToScore : Number(runsConceded) + userInput.runsToScore - 1;
+    runsScored = userInput.battingBowling === 'Yes' ? Number(runsScored) + userInput.runsToScore 
+                          : Number(runsScored) + userInput.runsToScore + 1;
+    runsConceded = userInput.battingBowling === 'No' ? Number(runsConceded) + userInput.runsToScore 
+                          : Number(runsConceded) + userInput.runsToScore - 1;
+    runsScoredOpp = userInput.battingBowling === 'No' ? Number(runsScoredOpp) + userInput.runsToScore 
+                          : Number(runsScoredOpp) + userInput.runsToScore + 1;
+    runsConcededOpp = userInput.battingBowling === 'Yes' ? Number(runsConcededOpp) + userInput.runsToScore 
+                          : Number(runsConcededOpp) + userInput.runsToScore - 1;
     oversFaced = this.overCalculation(oversFaced, (userInput.overs).toString());
+    oversFacedOpp = this.overCalculation(oversFacedOpp, (userInput.overs).toString());
     oversBowled = this.overCalculation(oversBowled, (userInput.overs).toString());
-    console.log('runsScored, oversFaced', runsScored, oversFaced);
+    oversBowledOpp = this.overCalculation(oversBowledOpp, (userInput.overs).toString());
+    console.log('runsScored, oversFaced', runsScored, oversFaced, this.pointsTableData[userInput.position - 1].NRR);
     console.log('runsConceded, oversBowled', runsConceded, oversBowled);
-    const nrr = Number(this.nrrCalculator(runsScored, runsConceded, oversFaced, oversBowled));
-    this.answer = `New NRR of ${userInput.playingTeam.Team} will be ${nrr.toFixed(3)}. Position not Supported`;
+    console.log('runsScoredOpp, oversFacedOpp', runsScoredOpp, oversFacedOpp);
+    console.log('runsConcededOpp, oversBowledOpp', runsConcededOpp, oversBowledOpp, userInput.oppositionTeam.NRR);
+    const nrr1 = Number(this.nrrCalculator(runsScored, runsConceded, oversFaced, oversBowled));
+    let opNrr = userInput.oppositionTeam.NRR;
+    let nrr2 = 0;
+    if(userInput.battingBowling === 'Yes') {
+      let temprunsConceded = runsConceded;
+      let temprunsScored = runsScoredOpp;
+      while (true) {
+        temprunsConceded--;
+        temprunsScored--;
+        nrr2 = Number(this.nrrCalculator(runsScored, temprunsConceded, oversFaced, oversBowled));
+        opNrr = Number(this.nrrCalculator(temprunsScored, runsConcededOpp, oversFaced, oversBowled));
+        console.log(temprunsConceded, nrr2.toFixed(3), temprunsScored, opNrr);
+        if (nrr2 < opNrr && nrr2 > this.pointsTableData[userInput.position - 1].NRR) { // 
+          break
+        }
+      }
+
+    }
+    this.answer = `New NRR of ${userInput.playingTeam.Team} will be ${nrr1.toFixed(3)}`;
     this.isFormSubmitted = true;
   }
 
@@ -110,7 +140,6 @@ export class PointsTableComponent implements OnInit {
 
   resetTheForm() {
     this.calculatorForm.reset();
-    console.log(this.calculatorForm.value);
     this.displayOtherFields = false;
     this.answer = '';
     this.isFormSubmitted = false;
@@ -122,6 +151,7 @@ export class PointsTableComponent implements OnInit {
     console.log(this.calculatorForm.value.playingTeam.Team);
     if (this.calculatorForm.value.playingTeam && this.calculatorForm.value.playingTeam.Team) {
       this.mainTeamSelected = this.calculatorForm.value.playingTeam.Team;
+      this.currentPosition = this.calculatorForm.value.playingTeam['#'];
       this.displayOtherFields = true;
     }
   }
