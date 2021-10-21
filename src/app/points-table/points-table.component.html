@@ -83,7 +83,7 @@
       <br />
 
       <div class="form-group row d-flex justify-content-center">
-        <button type="submit" class="btn btn-primary col-sm-2" [disabled]="!calculatorForm.valid">Calculate</button> &nbsp;&nbsp;
+        <button type="submit" class="btn btn-primary col-sm-2" [disabled]="!calculatorForm.valid || isFormSubmitted">Calculate</button> &nbsp;&nbsp;
         <button type="reset" class="btn btn-info col-sm-2" (click)="resetTheForm()" [disabled]="calculatorForm.pristine">Reset</button>
       </div>
       <br />

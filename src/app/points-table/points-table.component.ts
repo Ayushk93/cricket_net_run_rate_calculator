@@ -28,12 +28,14 @@ export class PointsTableComponent implements OnInit {
   constructor(private httpClient: HttpClient) { }
 
   ngOnInit(): void {
-    this.httpClient.get("https://glossy-certain-warlock.glitch.me/pointsTable").subscribe(data => { //http://localhost:3000
+    this.httpClient.get("https://glossy-certain-warlock.glitch.me/pointsTable").subscribe(data => { 
       console.log(data);
       this.pointsTableData = data;
     })
   }
-//https://glossy-certain-warlock.glitch.me/pointsTable
+    //http://localhost:3000
+    //https://glossy-certain-warlock.glitch.me/pointsTable
+  
   //below function is used for selection of appropriate values based on team selection 
   onSubmit() {
     const userInput = this.calculatorForm.value;
@@ -75,7 +77,10 @@ export class PointsTableComponent implements OnInit {
           }
           nrr3 = nrr2;
         }
-        this.answer = `Run from ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${userInput.runsToScore - 1} and New NRR of ${userInput.playingTeam.Team} will be from ${nrr1.toFixed(3)} to ${nrr3.toFixed(3)}`;
+        this.answer = `If ${userInput.playingTeam.Team} score ${userInput.runsToScore} runs in ${userInput.overs} overs,
+        ${userInput.playingTeam.Team} needs to restrict ${userInput.oppositionTeam.Team} between 
+        ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${userInput.runsToScore - 1} runs in ${userInput.overs} overs. 
+        Revised NRR of ${userInput.playingTeam.Team} will be from ${nrr1.toFixed(3)} to ${nrr3.toFixed(3)}`;
         this.isFormSubmitted = true;
       } else {
         while (true) {
@@ -99,25 +104,32 @@ export class PointsTableComponent implements OnInit {
             nrr1 = nrr2;
           }
         }
-        this.answer = `Run from ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${run2} and New NRR of ${userInput.playingTeam.Team} will be from ${nrr3.toFixed(3)} to ${nrr1.toFixed(3)}`;
+        this.answer = `If ${userInput.playingTeam.Team} score ${userInput.runsToScore} runs in ${userInput.overs} overs,
+        ${userInput.playingTeam.Team} needs to restrict ${userInput.oppositionTeam.Team} between 
+        ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${run2} runs in ${userInput.overs} overs. 
+        Revised NRR of ${userInput.playingTeam.Team} will be from ${nrr3.toFixed(3)} to ${nrr1.toFixed(3)}`;
         this.isFormSubmitted = true;
       }
     } else {
       let tempoversBowled = oversBowledOpp;
       let tempoversFaced = oversFaced;
+      let tempOverStorage;
       if (userInput.position + 2 === userInput.oppositionTeam['#']) {
         while (true) {
           tempoversBowled = this.overReducer(tempoversBowled);
           tempoversFaced = this.overReducer(tempoversFaced);
           nrr2 = Number(this.nrrCalculator(runsScored, temprunsConceded, tempoversFaced, oversBowled));
           opNrr = Number(this.nrrCalculator(temprunsScored, runsConcededOpp, oversFacedOpp, tempoversBowled));
-          console.log('tempoversBowled, tempoversFaced', tempoversBowled, tempoversFaced, nrr2, opNrr);
           if (nrr2 > opNrr && nrr2 > this.pointsTableData[userInput.position].NRR) {
             break;
           }
+          tempOverStorage = tempoversFaced;
           nrr3 = nrr2;
         }
-        this.answer = `Run from ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${userInput.runsToScore - 1} and New NRR of ${userInput.playingTeam.Team} will be from ${nrr1.toFixed(3)} to ${nrr3.toFixed(3)}`;
+        const fromOvers = this.oversSubtractor(userInput.overs, oversFaced, tempOverStorage);
+        this.answer = `${userInput.playingTeam.Team} need to chase ${userInput.runsToScore} runs between 
+        ${fromOvers} to ${userInput.overs} overs. Revised NRR of ${userInput.playingTeam.Team} will be from 
+        ${nrr1.toFixed(3)} to ${nrr3.toFixed(3)}`;
         this.isFormSubmitted = true;
       } else {
         while (true) {
@@ -125,7 +137,6 @@ export class PointsTableComponent implements OnInit {
           tempoversFaced = this.overReducer(tempoversFaced);
           nrr2 = Number(this.nrrCalculator(runsScored, temprunsConceded, tempoversFaced, oversBowled));
           opNrr = Number(this.nrrCalculator(temprunsScored, runsConcededOpp, oversFacedOpp, tempoversBowled));
-          console.log('tempoversBowled, tempoversFaced', tempoversBowled, tempoversFaced, nrr2, opNrr);
           if (nrr2 < opNrr && nrr2 > this.pointsTableData[userInput.position + 1].NRR && !bool) {
             if (nrr1 > this.pointsTableData[userInput.position + 1].NRR) {
               break;
@@ -134,15 +145,20 @@ export class PointsTableComponent implements OnInit {
               nrr3 = nrr2;
               nrr2 = nrr1;
             } 
-            run2 = (userInput.runsToScore - 1) - (runsConceded - temprunsConceded);
+            run2 = JSON.parse(JSON.stringify(tempoversFaced));
           } else if (bool && nrr2 > opNrr){
             break;
           }
           if (bool) {
             nrr1 = nrr2;
           }
+          tempOverStorage = tempoversFaced;
         }
-        this.answer = `Run from ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${run2} and New NRR of ${userInput.playingTeam.Team} will be from ${nrr3.toFixed(3)} to ${nrr1.toFixed(3)}`;
+        const fromOvers = this.oversSubtractor(userInput.overs, oversFaced, run2.toString());
+        const toOvers = this.oversSubtractor(userInput.overs, oversFaced, tempOverStorage);
+        this.answer = `${userInput.playingTeam.Team} need to chase ${userInput.runsToScore} runs between 
+        ${toOvers} to ${fromOvers} overs. Revised NRR of ${userInput.playingTeam.Team} will be from 
+        ${nrr3.toFixed(3)} to ${nrr1.toFixed(3)}`;
         this.isFormSubmitted = true;
       }
     }
@@ -216,6 +232,19 @@ export class PointsTableComponent implements OnInit {
     }
   }
 
+  oversSubtractor(userInputOvers: number, oldOversInput: string, newOversInput: string) {
+    if(oldOversInput.includes(".") && newOversInput.includes(".")) {
+      let oldOvers = oldOversInput.split(".");
+      let oldOversNum = (Number(oldOvers[0]) * 6) + Number(oldOvers[1]);
+      let newOvers = newOversInput.split(".");
+      let newOversNum = (Number(newOvers[0]) * 6) + Number(newOvers[1]);
+      let totalOvers = (userInputOvers * 6) - (oldOversNum - newOversNum);
+      return ((Math.floor((totalOvers) / 6)).toString() + '.' + (Math.abs(totalOvers) % 6));
+    } else {
+      let totalOvers = (userInputOvers * 6) - (Number(oldOversInput) - Number(newOversInput));
+      return ((Math.floor((totalOvers) / 6)).toString() + '.' + (Math.abs(totalOvers) % 6));
+    }
+  }
 
   resetTheForm() {
     this.calculatorForm.reset();
@@ -227,7 +256,6 @@ export class PointsTableComponent implements OnInit {
 
   playingTeamSelected(event: any) {
     this.mainTeamSelected = '';
-    console.log(this.calculatorForm.value.playingTeam.Team);
     if (this.calculatorForm.value.playingTeam && this.calculatorForm.value.playingTeam.Team) {
       this.mainTeamSelected = this.calculatorForm.value.playingTeam.Team;
       this.currentPosition = this.calculatorForm.value.playingTeam['#'];
