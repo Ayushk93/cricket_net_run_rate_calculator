@@ -28,7 +28,7 @@ export class PointsTableComponent implements OnInit {
   constructor(private httpClient: HttpClient) { }
 
   ngOnInit(): void {
-    this.httpClient.get("http://localhost:3000/pointsTable").subscribe(data => { //http://localhost:3000
+    this.httpClient.get("https://glossy-certain-warlock.glitch.me/pointsTable").subscribe(data => { //http://localhost:3000
       console.log(data);
       this.pointsTableData = data;
     })
@@ -47,37 +47,60 @@ export class PointsTableComponent implements OnInit {
     runsConceded = userInput.battingBowling === 'No' ? Number(runsConceded) + userInput.runsToScore 
                           : Number(runsConceded) + userInput.runsToScore - 1;
     runsScoredOpp = userInput.battingBowling === 'No' ? Number(runsScoredOpp) + userInput.runsToScore 
-                          : Number(runsScoredOpp) + userInput.runsToScore + 1;
+                          : Number(runsScoredOpp) + userInput.runsToScore - 1;
     runsConcededOpp = userInput.battingBowling === 'Yes' ? Number(runsConcededOpp) + userInput.runsToScore 
-                          : Number(runsConcededOpp) + userInput.runsToScore - 1;
+                          : Number(runsConcededOpp) + userInput.runsToScore + 1;
     oversFaced = this.overCalculation(oversFaced, (userInput.overs).toString());
     oversFacedOpp = this.overCalculation(oversFacedOpp, (userInput.overs).toString());
     oversBowled = this.overCalculation(oversBowled, (userInput.overs).toString());
     oversBowledOpp = this.overCalculation(oversBowledOpp, (userInput.overs).toString());
-    console.log('runsScored, oversFaced', runsScored, oversFaced, this.pointsTableData[userInput.position - 1].NRR);
-    console.log('runsConceded, oversBowled', runsConceded, oversBowled);
-    console.log('runsScoredOpp, oversFacedOpp', runsScoredOpp, oversFacedOpp);
+    let nrr1 = Number(this.nrrCalculator(runsScored, runsConceded, oversFaced, oversBowled));
+    const nrrOpp = Number(this.nrrCalculator(runsScoredOpp, runsConcededOpp, oversFacedOpp, oversBowledOpp));
+    console.log('runsScored, oversFaced', runsScored, oversFaced, this.pointsTableData[userInput.position].NRR);
+    console.log('runsConceded, oversBowled', runsConceded, oversBowled, userInput.position, nrr1);
+    console.log('runsScoredOpp, oversFacedOpp', runsScoredOpp, oversFacedOpp, userInput.oppositionTeam['#']);
     console.log('runsConcededOpp, oversBowledOpp', runsConcededOpp, oversBowledOpp, userInput.oppositionTeam.NRR);
-    const nrr1 = Number(this.nrrCalculator(runsScored, runsConceded, oversFaced, oversBowled));
-    let opNrr = userInput.oppositionTeam.NRR;
-    let nrr2 = 0;
-    if(userInput.battingBowling === 'Yes') {
-      let temprunsConceded = runsConceded;
-      let temprunsScored = runsScoredOpp;
+    let temprunsConceded = runsConceded;
+    let temprunsScored = runsScoredOpp;
+    let opNrr = userInput.oppositionTeam.NRR, nrr2 = 0, nrr3 = 0, bool = false, run1 = 0, run2 = 0;
+    if (userInput.battingBowling === 'Yes' && (userInput.position + 2 === userInput.oppositionTeam['#'])) { 
       while (true) {
         temprunsConceded--;
         temprunsScored--;
         nrr2 = Number(this.nrrCalculator(runsScored, temprunsConceded, oversFaced, oversBowled));
-        opNrr = Number(this.nrrCalculator(temprunsScored, runsConcededOpp, oversFaced, oversBowled));
-        console.log(temprunsConceded, nrr2.toFixed(3), temprunsScored, opNrr);
-        if (nrr2 < opNrr && nrr2 > this.pointsTableData[userInput.position - 1].NRR) { // 
-          break
+        opNrr = Number(this.nrrCalculator(temprunsScored, runsConcededOpp, oversFacedOpp, oversBowledOpp));
+        if (nrr2 > opNrr && nrr2 > this.pointsTableData[userInput.position].NRR) {
+          break;
+        }
+        nrr3 = nrr2;
+      }
+      this.answer = `Run from ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${userInput.runsToScore - 1} and New NRR of ${userInput.playingTeam.Team} will be from ${nrr1.toFixed(3)} to ${nrr3.toFixed(3)}`;
+      this.isFormSubmitted = true;
+    } else {
+      while (true) {
+        temprunsConceded--;
+        temprunsScored--;
+        nrr2 = Number(this.nrrCalculator(runsScored, temprunsConceded, oversFaced, oversBowled));
+        opNrr = Number(this.nrrCalculator(temprunsScored, runsConcededOpp, oversFacedOpp, oversBowledOpp));
+        if (nrr2 < opNrr && nrr2 > this.pointsTableData[userInput.position + 1].NRR && !bool) {
+          if (nrr1 > this.pointsTableData[userInput.position + 1].NRR) {
+            break;
+          } else if(!bool) {
+            bool = true;
+            nrr3 = nrr2;
+            nrr2 = nrr1;
+          } 
+          run2 = (userInput.runsToScore - 1) - (runsConceded - temprunsConceded);
+        } else if (bool && nrr2 > opNrr){
+          break;
+        }
+        if (bool) {
+          nrr1 = nrr2;
         }
       }
-
+      this.answer = `Run from ${(userInput.runsToScore) - (runsConceded - temprunsConceded)} to ${run2} and New NRR of ${userInput.playingTeam.Team} will be from ${nrr3.toFixed(3)} to ${nrr1.toFixed(3)}`;
+      this.isFormSubmitted = true;
     }
-    this.answer = `New NRR of ${userInput.playingTeam.Team} will be ${nrr1.toFixed(3)}`;
-    this.isFormSubmitted = true;
   }
 
   overCalculation(oldOversInput: string, newOversInput: string): string {
